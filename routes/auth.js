@@ -54,7 +54,7 @@ authRouter.post("/verify-user", async (req, res) => {
             token
         });
     } catch (error) {
-        res.send({
+        res.status(401).json({
             error: error.message
         });
     }

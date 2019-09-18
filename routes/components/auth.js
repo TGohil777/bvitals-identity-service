@@ -1,5 +1,5 @@
 const models = require('../../models');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const urlEncoded = bodyParser.urlencoded({
     extended: true
@@ -46,6 +46,5 @@ return {
 }
 })
 module.exports ={
-    verifyingUser,
     changePassword
 }

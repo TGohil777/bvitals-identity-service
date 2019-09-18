@@ -1,7 +1,5 @@
 const express = require('express');
 const authRouter = express.Router();
-const {changePassword} = require ('./components/auth');
-const {changepwdvalidate} = require('./validations/changePasswordvaidation');
 const models = require('../models/index');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -60,23 +58,38 @@ authRouter.post("/verify-user", async (req, res) => {
     }
 })
 
-authRouter.post("/change-password", async (req, res) => {
-    const {errors, isValid} = changepwdvalidate(req.body)
-    if (!isValid) {
-        res.status(400).json(errors)
-    } else {
-        try {
-            const {errors, data} = await changePassword(req.body);
-            if (isEmpty(errors)) {
-                res.status(200).json(data)
-            }else{
-                res.status(401).json(errors)
+authRouter.post("/change-password", async (req, res) => {  //End point for a user to change their password
+    const {email, password, newpassword} = req.body
+    try{
+        const user = await models.auth.findOne({  //Check for the  email in db
+            where: {
+                email: email
             }
-        } catch(err) {
-            res.status(401).json({
-                message: err.message 
-            })
+            });
+        if(!user)  
+            throw new Error(`User with email ${email} not found`);
+        const isMatch = await bcrypt.compare(password, user.password);  //Comparing the associated hashed pwd stored in db
+            if (!isMatch) {
+                throw new Error(`Invalid password`);   
+            }
+        const salt = await bcrypt.genSalt(10)     
+        const hashedNewPassword = await bcrypt.hash(newpassword, salt);
+        const pwd = await models.auth.update({ password:  hashedNewPassword },
+            {
+                where:{
+                    email: email  
+                }
+            });
+        if(pwd){
+            res.status(200).json({
+            message: "Password changed successfully"})
+        }else{
+            throw new Error('There was an error while changing the password')
         }
+    }catch (error) {
+        res.status(401).json({
+        error: error.message
+        });
     }
 })
 

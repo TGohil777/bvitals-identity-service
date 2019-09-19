@@ -53,7 +53,7 @@ app.use(async (req, res, next) => {
 app.use('/api/v1/identity-service', require('./routes/user'));
 
 models.sequelize.sync().then(() => {
-  app.listen(process.env.PORT, () => {
+  app.listen(4200, () => {
     console.log(chalk.green(`Express server listening on port ${process.env.PORT}`));
   });
 });

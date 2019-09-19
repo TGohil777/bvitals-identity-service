@@ -46,6 +46,5 @@ return {
 }
 })
 module.exports ={
-    verifyingUser,
     changePassword
 }

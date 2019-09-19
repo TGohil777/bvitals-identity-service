@@ -5,7 +5,7 @@ const urlEncoded = bodyParser.urlencoded({
     extended: true
 });
 
-const creatingClininalAdmin = (async (requestData) => {
+const creatingClinicalAdmin = (async (requestData) => {
 let data ={}
 let errors ={}
     try {
@@ -140,7 +140,6 @@ const deleteUser = async (req) =>{
 
 
 module.exports = {
-    creatingClininalAdmin,
     editUser,
     deleteUser,
 }

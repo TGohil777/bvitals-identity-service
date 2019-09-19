@@ -6,7 +6,7 @@ const {deleteUser} = require('./components/user')
 const {validation} = require('./validations/createUserValidation')
 const isEmpty = require ('./validations/isEmpty')
 const jwt = require('jsonwebtoken')
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const models = require('../models');
 authRouter.get('/current-user', async(req, res) => {
     try{

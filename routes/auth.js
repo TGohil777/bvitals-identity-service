@@ -3,7 +3,7 @@ const authRouter = express.Router();
 const {changePassword} = require ('./components/auth');
 const {changepwdvalidate} = require('./validations/changePasswordvaidation');
 const models = require('../models/index');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 authRouter.post("/verify-user", async (req, res) => {

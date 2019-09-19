@@ -12,21 +12,17 @@ authRouter.get('/current-user', async(req, res) => {
     try{
         const token = req.headers['authorization']
         const currentUser = await jwt.verify(token, process.env.SECRET);
-        const {email,role} = currentUser
-        if(email!==null && role!== null ){
-            return res.status(200).json({
-                isValid:true
-            })
-        }else{
-            return res.status(401).json({
-                isValid:false
-            })
+        if (!currentUser) {
+            throw new Error();
         }
-        }catch(err){
-        return res.status(401).json({
-            message: err.message 
-        })
-        }
+        res.status(200).json({
+            isValid: true
+        });
+    }catch(err){
+        res.status(401).json({
+            isValid: false
+        });
+    }
 })
 authRouter.post("/create-clinicaladmin", async (req, res) => {
     const {errors, isValid} = validation(req.body)

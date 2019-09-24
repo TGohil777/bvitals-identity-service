@@ -6,9 +6,7 @@ const chalk = require('chalk');
 const models = require('./models');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
-require('dotenv').config({
-  path: '.variables.env'
-});
+require('dotenv').config();
 const cors = require('cors');
 const app = express();
 

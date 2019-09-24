@@ -2,8 +2,8 @@ const express = require('express');
 const authRouter = express.Router();
 const jwt = require('jsonwebtoken')
 const models = require('../models');
-const bcrypt = require('bcrypt');
-
+const bcrypt = require('bcryptjs');
+const {getAuth} = require('./instance/authid')
 
 authRouter.get('/current-user', async(req, res) => {
     try{
@@ -21,7 +21,7 @@ authRouter.get('/current-user', async(req, res) => {
         });
     }
 })
-
+//---------------------------------------------------------------------------------------------------------------------
 authRouter.post("/edit-user", async (req, res) => {
     try{
         const {email} = req.body
@@ -88,7 +88,7 @@ authRouter.post("/edit-user", async (req, res) => {
         });
     }
 })
-
+//-----------------------------------------------------------------------------------------------------------------
 authRouter.post("/delete-user", async (req, res) => {  //Deleting an existing user in db
     const {email} = req.body
     try{
@@ -120,21 +120,21 @@ authRouter.post("/delete-user", async (req, res) => {  //Deleting an existing us
         });
     }
 })
-
+//------------------------------------------------------------------------------------------------------------------------
 authRouter.post("/create-ClinicalAdmin", async (req, res) => {    //Create a new Clinical Admin when  a superAdmin logs-in    
     try{
         const {newUserFirstName, newUserLastName, newUserEmail, newUserPassword, email} = req.body
         const salt = await bcrypt.genSalt(10)     //else part
         const hashedPassword = await bcrypt.hash(newUserPassword, salt);
-        const superAdmin = await models.auth.findOne({  
-            where: {
-                email: email
-            }
-            });
-        if(!superAdmin)  
-            throw new Error(`User with email ${email} not found`); 
+        // const superAdmin = await models.auth.findOne({  
+        //     where: {
+        //         email: email
+        //     }
+        //     });
+        // if(!superAdmin)  
+        //     throw new Error(`User with email ${email} not found`); 
 
-            const existingEmail = await models.auth.findOne({           //checking if email ID exists in auth table
+            const existingEmail = await models.auth.findOne({         //checking if email ID exists in auth table
                 where: {
                     email: newUserEmail
                 }
@@ -142,20 +142,22 @@ authRouter.post("/create-ClinicalAdmin", async (req, res) => {    //Create a new
             if (existingEmail) {
                     throw new Error(`User with email ${newUserEmail} already exists`)
             }
-            else{
+            else{                                        //if the user email does noot exist creating a new user
                 const added = await models.auth.create({
                     firstname: newUserFirstName,
                     lastname: newUserLastName,
                     email: newUserEmail,
                     password: hashedPassword
                 });
-                const roleAdded = await models.authrole.create({   //Associating auth and role table
+                const roleAdded = await models.authrole.create({   //Associating auth and role table with authid
                     authid: added.authid,
                     roleid: 10002
                 });
                 if(added && roleAdded){
                     res.status(200).json({
-                        message: "User added successfully"})     
+                        message: "User added successfully",
+                        user:added
+                })     
                 } 
             }        
     }catch (error) {
@@ -164,5 +166,40 @@ authRouter.post("/create-ClinicalAdmin", async (req, res) => {    //Create a new
         });
     }
 })
+//----------------------------------------------------------------------------------------------------------------------
+
+authRouter.route('/associated-users').get(async (req, res) => {
+    const token = req.headers['authorization'];
+    const {id} = req.query
+
+    try{
+        if (!token){throw new Error('User is unauthorized')  }
+        else{
+            const response = await getAuth(token, id)
+            
+            const auth = response.data;            
+            const users = auth.map(async (authids) => {
+                const ids = authids['authid']
+                return models.role.findOne({
+                    attributes:['name'],
+                    include:[{
+                        model:models.auth, as: 'users',
+                        where:{
+                            authid:ids
+                        },
+                        attributes:['firstname','lastname','email']
+                    }]
+                });
+            });
+            Promise.all(users).then(values => res.status(200).json(values));
+            if(!response) throw new Error('There was an error while displaying the list!')
+        }   
+    }catch(err){
+        return res.status(400).json({
+            message : err.message
+        })
+    }
+});
+
 
 module.exports=authRouter

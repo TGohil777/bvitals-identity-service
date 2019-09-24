@@ -1,7 +1,7 @@
 const express = require('express');
 const authRouter = express.Router();
 const models = require('../models/index');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 authRouter.post("/verify-user", async (req, res) => {

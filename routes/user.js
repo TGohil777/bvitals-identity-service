@@ -3,9 +3,9 @@ const authRouter = express.Router();
 const jwt = require('jsonwebtoken')
 const models = require('../models');
 const bcrypt = require('bcryptjs');
-const {getAuth} = require('./instance/authid')
+const {getAuth} = require('./instance/authid')  //accessing the instance of authid recieved from storage service
 
-authRouter.get('/current-user', async(req, res) => {
+authRouter.get('/current-user', async(req, res) => {   //End point to verify and get the cuurent user that has logged-in
     try{
         const token = req.headers['authorization']
         const currentUser = await jwt.verify(token, process.env.SECRET);
@@ -21,7 +21,7 @@ authRouter.get('/current-user', async(req, res) => {
         });
     }
 })
-//---------------------------------------------------------------------------------------------------------------------
+
 authRouter.post("/edit-user", async (req, res) => {
     try{
         const {email} = req.body
@@ -88,7 +88,7 @@ authRouter.post("/edit-user", async (req, res) => {
         });
     }
 })
-//-----------------------------------------------------------------------------------------------------------------
+
 authRouter.post("/delete-user", async (req, res) => {  //Deleting an existing user in db
     const {email} = req.body
     try{
@@ -120,63 +120,59 @@ authRouter.post("/delete-user", async (req, res) => {  //Deleting an existing us
         });
     }
 })
-//------------------------------------------------------------------------------------------------------------------------
-authRouter.post("/create-ClinicalAdmin", async (req, res) => {    //Create a new Clinical Admin when  a superAdmin logs-in    
-    try{
-        const {newUserFirstName, newUserLastName, newUserEmail, newUserPassword, email} = req.body
-        const salt = await bcrypt.genSalt(10)     //else part
-        const hashedPassword = await bcrypt.hash(newUserPassword, salt);
-        // const superAdmin = await models.auth.findOne({  
-        //     where: {
-        //         email: email
-        //     }
-        //     });
-        // if(!superAdmin)  
-        //     throw new Error(`User with email ${email} not found`); 
 
-            const existingEmail = await models.auth.findOne({         //checking if email ID exists in auth table
-                where: {
-                    email: newUserEmail
-                }
-            });
-            if (existingEmail) {
-                    throw new Error(`User with email ${newUserEmail} already exists`)
+//End point to create a new Clinical Admin 
+authRouter.post("/create-ClinicalAdmin", async (req, res) => {        
+    try{
+        const {firstname, lastname, email, password} = req.body
+        const salt = await bcrypt.genSalt(10)     //else part
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const existingEmail = await models.auth.findOne({         //checking if email ID exists in auth table
+            where: {
+                email: email
             }
-            else{                                        //if the user email does noot exist creating a new user
-                const added = await models.auth.create({
-                    firstname: newUserFirstName,
-                    lastname: newUserLastName,
-                    email: newUserEmail,
-                    password: hashedPassword
-                });
-                const roleAdded = await models.authrole.create({   //Associating auth and role table with authid
-                    authid: added.authid,
-                    roleid: 10002
-                });
-                if(added && roleAdded){
-                    res.status(200).json({
-                        message: "User added successfully",
-                        user:added
+        });
+        if (existingEmail) {
+          const exisingUser = await models.auth.findOne({
+              where:{
+                  email:email
+              }
+          })
+          res.send(exisingUser)
+        }else{                                        //if the user email does not exist, creating a new user
+            const added = await models.auth.create({
+                firstname: firstname,
+                lastname: lastname,
+                email: email,
+                password: hashedPassword,
+            });
+            const roleAdded = await models.authrole.create({   //Associating auth and role table with authid
+                authid: added.authid,
+                roleid: 10002
+            });
+            if(added && roleAdded){
+                res.status(200).json({
+                    message: "User added successfully",
+                    user:added
                 })     
-                } 
-            }        
+            } 
+        }        
     }catch (error) {
         res.status(401).json({
         error: error.message
         });
     }
 })
-//----------------------------------------------------------------------------------------------------------------------
 
-authRouter.route('/associated-users').get(async (req, res) => {
+//End point to view users in a particular organization
+authRouter.route('/associated-users').get(async (req, res) => {  
     const token = req.headers['authorization'];
     const {id} = req.query
-
     try{
-        if (!token){throw new Error('User is unauthorized')  }
-        else{
+        if (!token){
+            throw new Error('User is unauthorized')  
+        }else{
             const response = await getAuth(token, id)
-            
             const auth = response.data;            
             const users = auth.map(async (authids) => {
                 const ids = authids['authid']

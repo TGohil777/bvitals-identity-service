@@ -4,14 +4,15 @@ const models = require('../models/index');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+//Verifying the logged in user from the database
 authRouter.post("/verify-user", async (req, res) => {
     const {email, password} = req.body;
     try {
         const user = await models.auth.findOne({
-            where: {
+            where:{
                 email: email
             }
-        });
+         })
         if (!user) {
             throw new Error(`User with email ${email} not found`);
         }
@@ -41,7 +42,7 @@ authRouter.post("/verify-user", async (req, res) => {
 
         const userData = {
             email: user.email,
-            role: role.name
+            role: role.name,
         }
 
         const token  = await jwt.sign(userData, process.env.SECRET, {

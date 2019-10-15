@@ -133,18 +133,13 @@ authRouter.post("/create-ClinicalAdmin", async (req, res) => {
             }
         });
         if (existingEmail) {
-          const exisingUser = await models.auth.findOne({
-              where:{
-                  email:email
-              }
-          })
-          res.send(exisingUser)
+            throw new Error(`User with email ${email} already exists`)
         }else{                                        //if the user email does not exist, creating a new user
             const added = await models.auth.create({
                 firstname: firstname,
                 lastname: lastname,
                 email: email,
-                password: hashedPassword,
+                password: hashedPassword
             });
             const roleAdded = await models.authrole.create({   //Associating auth and role table with authid
                 authid: added.authid,
